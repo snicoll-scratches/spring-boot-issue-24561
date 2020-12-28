@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanCurrentlyInCreationException;
 import org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -24,14 +25,17 @@ public class DemoPostProcessor implements DestructionAwareBeanPostProcessor, App
 
 	Optional<Hello> getHello() {
 		if (applicationContext.getServletContext() != null) {
-			// Once we have servletContext I want to instantiate my Hello bean
-			// Unfortunately, this fails with:
+			// Once we have servletContext I want to instantiate my Hello bean. This could fail with:
 			//
-			// Caused by: org.springframework.beans.factory.BeanCurrentlyInCreationException:
-			// Error creating bean with name 'hello':
-			// Requested bean is currently in creation: Is there an unresolvable circular reference?
+			// > Caused by: org.springframework.beans.factory.BeanCurrentlyInCreationException:
+			// > Error creating bean with name 'hello':
+			// > Requested bean is currently in creation: Is there an unresolvable circular reference?
 
-			return Optional.of(applicationContext.getBean(Hello.class));
+			try {
+				return Optional.of(applicationContext.getBean(Hello.class));
+			} catch (BeanCurrentlyInCreationException e) {
+				// Ignore
+			}
 		}
 
 		return Optional.empty();
